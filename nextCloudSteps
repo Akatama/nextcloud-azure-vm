@@ -18,40 +18,23 @@ quit;
 9. wget https://nextcloud.com/nextcloud.asc
 10. gpg --import nextcloud.asc
 11. gpg --verify latest.zip.asc latest.zip
-12. unzip -q latest.zip
-13. sudo cp -r nextcloud /var/www
-14. sudo chown -R www-data:www-data /var/www/nextcloud
-15. sudo vim /etc/apache2/sites-available/nextcloud.conf
-16. paste this:
-Alias /nextcloud "/var/www/nextcloud/"
-
-<Directory /var/www/nextcloud/>
-  Require all granted
-  AllowOverride All
-  Options FollowSymLinks MultiViews
-
-  <IfModule mod_dav.c>
-    Dav off
-  </IfModule>
-</Directory>
-
-17. sudo a2ensite nextcloud.conf
-sudo systemctl reload apache2
-18. sudo a2enmod rewrite && sudo a2enmod env && sudo a2enmod dir && sudo a2enmod mime && sudo a2enmod headers
-19. sudo a2enmod ssl && sudo a2ensite default-ssl && sudo service apache2 reload
-20. sudo systemctl restart apache2
-sudo systemctl reload apache2
+12. unzip -q latest.zip -d /var/www
+13. sudo chown -R www-data:www-data /var/www/nextcloud
+14. copy nextcloud.conf to /etc/apache2/sites-available/
+15. sudo a2ensite nextcloud.conf
+16. sudo systemctl reload apache2
+17. sudo a2enmod rewrite && sudo a2enmod env && sudo a2enmod dir && sudo a2enmod mime && sudo a2enmod headers
+18. sudo a2enmod ssl && sudo a2ensite default-ssl && sudo service apache2 reload
+19. sudo systemctl restart apache2
+20. sudo systemctl reload apache2
 21. systemctl is-active apache2
 23. cd /var/www/nextcloud/
 24. sudo -u www-data php occ  maintenance:install \
 --database='mysql' --database-name='nextcloud' \
 --database-user='ncadmin' --database-pass='slapstick-pretzel-sesame-deputize' \
 --admin-user='ncadmin' --admin-pass='LiyueSavedByTheTraveler!'
-25. add the following lines to /var/www/nextcloud/config/config.php
-  'overwrite.cli.url' => 'https://localhost/nextcloud',
-  'htaccess.RewriteBase' => '/nextcloud',
-  'maintenance_window_start' => '1',
-As well as my IP
+25. mv /var/www/nextcloud/config/config.php /var/www/nextcloud/config/config.old.php
+26. Copy config.php to /var/www/nextcloud/config/
 26. sudo -u www-data php /var/www/nextcloud/occ maintenance:update:htaccess
 27. sudo crontab -u www-data -e (need to find out how to get rid of the option selection here)
 28. Add this line: */5  *  *  *  * php -f /var/www/nextcloud/cron.php
