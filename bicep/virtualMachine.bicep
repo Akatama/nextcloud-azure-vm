@@ -1,8 +1,8 @@
 @description('Name of the virtual machine that we will create')
-param virtualMachineName string
+param vmName string
 
 @description('Size of the created virtual machine')
-param vmSize string
+param vmSize string = 'Standard_B2s'
 
 param location string = 'Central US'
 
@@ -45,7 +45,7 @@ var linuxConfiguration = {
 }
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
-  name: '${virtualMachineName}-nsg'
+  name: '${vmName}-nsg'
   location: location
   properties: {
     securityRules: [
@@ -93,7 +93,7 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
 }
 
 resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
-  name: '${virtualMachineName}-PublicIP'
+  name: '${vmName}-PublicIP'
   location: location
   sku: {
     name: 'Basic'
@@ -107,7 +107,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
 }
 
 resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
-  name : '${virtualMachineName}-NIC'
+  name : '${vmName}-NIC'
   location: location
   properties: {
     ipConfigurations: [
@@ -131,14 +131,14 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
-  name: virtualMachineName
+  name: vmName
   location: location
   properties: {
     hardwareProfile: {
       vmSize: vmSize
     }
     osProfile: {
-      computerName: virtualMachineName
+      computerName: vmName
       adminUsername: adminUsername
       adminPassword: adminPasswordOrKey
       linuxConfiguration: ((authenticationType == 'password') ? null: linuxConfiguration)
@@ -177,5 +177,5 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
 }
 
 output adminUsername string = adminUsername
-output hostname string = publicIP.properties.dnsSettings.fqdn
-output sshCommand string = 'ssh ${adminUsername}@${publicIP.properties.dnsSettings.fqdn}'
+// output hostname string = publicIP.properties.dnsSettings.fqdn
+// output sshCommand string = 'ssh ${adminUsername}@${publicIP.properties.dnsSettings.fqdn}'

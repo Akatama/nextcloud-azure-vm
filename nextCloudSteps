@@ -5,7 +5,7 @@ need port HTTP (80), HTTPs (443) and SSH (22)
 2. sudo apt install apache2 mariadb-server libapache2-mod-php php-gd php-mysql \
     php-curl php-mbstring php-intl php-gmp php-bcmath php-xml php-imagick php-zip unzip -y
 3. sudo mysql
-4. CREATE USER 'ncadmin'@'localhost' IDENTIFIED BY 'slapstick-pretzel-sesame-deputize';
+4. CREATE USER 'ncadmin'@'localhost' IDENTIFIED BY '<password>';
 CREATE DATABASE IF NOT EXISTS nextcloud CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 GRANT ALL PRIVILEGES ON nextcloud.* TO 'ncadmin'@'localhost';
 FLUSH PRIVILEGES;
@@ -31,8 +31,8 @@ quit;
 23. cd /var/www/nextcloud/
 24. sudo -u www-data php occ  maintenance:install \
 --database='mysql' --database-name='nextcloud' \
---database-user='ncadmin' --database-pass='slapstick-pretzel-sesame-deputize' \
---admin-user='ncadmin' --admin-pass='LiyueSavedByTheTraveler!'
+--database-user='ncadmin' --database-pass='<password>' \
+--admin-user='ncadmin' --admin-pass='<admin_pass>'
 25. mv /var/www/nextcloud/config/config.php /var/www/nextcloud/config/config.old.php
 26. Copy config.php to /var/www/nextcloud/config/
 26. sudo -u www-data php /var/www/nextcloud/occ maintenance:update:htaccess
