@@ -19,7 +19,7 @@ $CONFIG = array (
   'dbtableprefix' => 'oc_',
   'mysql.utf8mb4' => true,
   'dbuser' => 'ncadmin',
-  'dbpassword' => 'slapstick-pretzel-sesame-deputize',
+  'dbpassword' => 'test-passowrd-for-now',
   'installed' => true,
   "maintenance_window_start" => "1",
 );

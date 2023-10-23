@@ -1,0 +1,135 @@
+---
+- name: Configure NextCloud
+  hosts: all
+  
+  tasks:
+    - name: Update software packages
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+      become: true
+    - name: Download needed packages
+      ansible.builtin.apt:
+        name:
+        - apache2
+        - mariadb-server
+        - libapache2-mod-php
+        - php-gd
+        - php-mysql
+        - php-curl 
+        - php-mbstring 
+        - php-intl 
+        - php-gmp 
+        - php-bcmath
+        - php-xml
+        - php-imagick
+        - php-zip
+        - python3-mysqldb
+        - unzip
+        state: present
+      become: true
+    - name: Create mysql database nextcloud
+      community.mysql.mysql_db:
+        name: nextcloud
+        state: present
+        encoding: utf8mb4
+        collation: utf8mb4_general_ci
+      become: true
+    - name: Create user for mysql database nextcloud
+      community.mysql.mysql_user:
+        state: present
+        name: ncadmin
+        password: test-passowrd-for-now
+        priv: 'nextcloud.*:ALL,GRANT'
+      become: true
+    - name: Download NextCloud server and confirm the checksum
+      ansible.builtin.get_url:
+        url: https://download.nextcloud.com/server/releases/latest.zip
+        dest: /home/jimmy
+        checksum: sha256:https://download.nextcloud.com/server/releases/latest.zip.sha256
+    - name: Extract NextCloud server
+      ansible.builtin.unarchive:
+        src: latest.zip
+        dest: /var/www
+        remote_src: true
+      become: true
+    - name: Change ownership for each file in /var/www/nextcloud to www-data
+      ansible.builtin.file:
+        path: /var/www/nextcloud
+        owner: www-data
+        group: www-data
+        recurse: yes
+      become: true
+    - name: Copy nextcloud.conf to /etc/apache2/sites-available/
+      ansible.builtin.copy:
+        src: ../files/nextcloud.conf
+        dest: /etc/apache2/sites-available/nextcloud.conf
+        owner: www-data
+        group: www-data
+        mode: u=rw,g=r,o=r
+      become: true
+    - name: Enable site
+      ansible.builtin.command:
+        cmd: a2ensite nextcloud.conf
+      become: true
+    - name: Reload apache2
+      ansible.builtin.systemd:
+        name: apache2
+        state: reloaded
+      become: true
+    - name: Enable a2enmod modules
+      ansible.builtin.shell: |
+          sudo a2enmod rewrite
+          sudo a2enmod env
+          sudo a2enmod dir
+          sudo a2enmod mime
+          sudo a2enmod headers
+          sudo a2enmod ssl
+    - name: Enable Default SSL
+      ansible.builtin.command:
+        cmd: a2ensite default-ssl
+      become: true
+    - name: Reload apache2
+      ansible.builtin.systemd:
+        name: apache2
+        state: reloaded
+      become: true
+    - name: Restart apache2
+      ansible.builtin.systemd:
+        name: apache2
+        state: restarted
+      become: true
+    # - name: See if our nextcloud admin account already exists and save the output as a variable (bit)
+    #   community.mysql.mysql_query:
+    #     login_db: nextcloud
+    #     query: SELECT EXISTS (select 1 from oc_users WHERE uid='ncadmin')
+    #   register: admin_user_exist
+    #   become: true
+    - name: Run NextCloud setup
+      ansible.builtin.shell:
+        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-name='nextcloud' --database-user='ncadmin' --database-pass='test-passowrd-for-now' --admin-user='ncadmin' --admin-pass='ChloeandEllaPlaying!'
+        chdir: /var/www/nextcloud/
+      # when: admin_user_exist == 0
+    - name: Remove old config.php file
+      ansible.builtin.file:
+        path: /var/www/nextcloud/config/config.php
+        state: absent
+      become: true
+    - name: Add the new config.php file
+      ansible.builtin.copy:
+        src: ../files/config.php
+        dest: /var/www/nextcloud/config/config.php
+        owner: www-data
+        group: www-data
+        mode: u=rw,g=r,o=r
+      become: true
+    - name: Update htaccess for NextCloud
+      ansible.builtin.shell:
+        cmd: sudo -u www-data php /var/www/nextcloud/occ maintenance:update:htaccess
+    - name: Set up cron job to maintain NextCloud server
+      ansible.builtin.cron:
+        name: NextCloud maintenance
+        minute: "*/5"
+        job: php -f /var/www/nextcloud/cron.php
+        user: www-data
+      become: true

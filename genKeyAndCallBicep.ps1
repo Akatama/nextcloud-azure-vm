@@ -5,7 +5,7 @@ $publicKeyName = $vmName + "-key.pub"
 $privateKeyPath = $keyPath + "/" + $privateKeyName
 $publicKeyPath  = $keyPath + "/" + $publicKeyName
 
-ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath
+# ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N ''
 
 $sshKey = Get-Content $publicKeyPath
 $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
