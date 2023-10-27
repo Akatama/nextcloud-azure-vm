@@ -1,6 +1,9 @@
 ---
 - name: Configure NextCloud
   hosts: all
+  gather_facts: false
+  vars_files:
+    - vars/info.yml
   
   tasks:
     - name: Update software packages
@@ -38,8 +41,8 @@
     - name: Create user for mysql database nextcloud
       community.mysql.mysql_user:
         state: present
-        name: ncadmin
-        password: test-passowrd-for-now
+        name: '{{ db_user }}'
+        password: '{{ db_password }}'
         priv: 'nextcloud.*:ALL,GRANT'
       become: true
     - name: Download NextCloud server and confirm the checksum
@@ -60,13 +63,13 @@
         group: www-data
         recurse: yes
       become: true
-    - name: Copy nextcloud.conf to /etc/apache2/sites-available/
+    - name: Ensure Nextcloud is configured
       ansible.builtin.copy:
         src: ../files/nextcloud.conf
         dest: /etc/apache2/sites-available/nextcloud.conf
         owner: www-data
         group: www-data
-        mode: u=rw,g=r,o=r
+        mode: 0644
       become: true
     - name: Enable site
       ansible.builtin.command:
@@ -99,29 +102,33 @@
         name: apache2
         state: restarted
       become: true
-    # - name: See if our nextcloud admin account already exists and save the output as a variable (bit)
-    #   community.mysql.mysql_query:
-    #     login_db: nextcloud
-    #     query: SELECT EXISTS (select 1 from oc_users WHERE uid='ncadmin')
-    #   register: admin_user_exist
-    #   become: true
+    - name: See if file exists
+      ansible.builtin.stat:
+        path: /var/www/nextcloud/nextcloud_installed.txt
+      register: nextcloud_installed
     - name: Run NextCloud setup
       ansible.builtin.shell:
-        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-name='nextcloud' --database-user='ncadmin' --database-pass='test-passowrd-for-now' --admin-user='ncadmin' --admin-pass='ChloeandEllaPlaying!'
+        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }}'
         chdir: /var/www/nextcloud/
-      # when: admin_user_exist == 0
+      when: not nextcloud_installed.stat.exists
+    - name: Add the nextcloud_installed.txt file, if it doesn't exist
+      ansible.builtin.file:
+        path: /var/www/nextcloud/nextcloud_installed.txt
+        state: touch
+        mode: 0644
+      become: true
     - name: Remove old config.php file
       ansible.builtin.file:
         path: /var/www/nextcloud/config/config.php
         state: absent
       become: true
     - name: Add the new config.php file
-      ansible.builtin.copy:
-        src: ../files/config.php
+      ansible.builtin.template:
+        src: ../files/config.php.j2
         dest: /var/www/nextcloud/config/config.php
         owner: www-data
         group: www-data
-        mode: u=rw,g=r,o=r
+        mode: 0644
       become: true
     - name: Update htaccess for NextCloud
       ansible.builtin.shell:
