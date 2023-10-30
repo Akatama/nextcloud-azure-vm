@@ -1,19 +1,41 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
+
+variables:
+- name: vmName
+  value: nextCloudBicep
+- name: resourceGroupName
+  value: app-jlindsey2
+- name: location
+  value: Central US
+- name: userName
+  value: jimmy
+- name: vnetName
+  value: ansible-test-vnet
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+jobs:
+- job: Create_virtual_machine_and_configure_NextCloud
+  timeoutInMinutes: 10
+  steps:
+    - task: AzurePowerShell@5
+      inputs:
+        azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+        ScriptType: 'InlineScript'
+        Inline: |
+          $keyPath = $HOME + "/.ssh/"
+          $privateKeyName = $(vmName) + "-key"
+          $publicKeyName = $(vmName) + "-key.pub"
+          $privateKeyPath = $keyPath + "/" + $privateKeyName
+          $publicKeyPath  = $keyPath + "/" + $publicKeyName
+          
+          ssh-keygen -m PEM -t rsa -b 2048 -C $(vmName) -f $privateKeyPath -N ''
+          
+          $sshKey = Get-Content $publicKeyPath
+          $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+          New-AzResourceGroupDeployment -ResourceGroupName $(resourceGroupName) -TemplateFile $(System.DefaultWorkingDirectory)/bicep/virtualMachine.bicep -vmName $(vmName) `
+          -location $(location) -vnetName $(vnetName) -adminUsername $(userName) -adminPasswordOrKey $secureSSHKey
+    
