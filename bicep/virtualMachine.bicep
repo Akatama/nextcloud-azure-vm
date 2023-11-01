@@ -175,7 +175,3 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
     }
   }
 }
-
-output adminUsername string = adminUsername
-// output hostname string = publicIP.properties.dnsSettings.fqdn
-// output sshCommand string = 'ssh ${adminUsername}@${publicIP.properties.dnsSettings.fqdn}'
