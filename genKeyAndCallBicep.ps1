@@ -24,8 +24,8 @@ $publicIPName = "${vmName}-PublicIP"
 $keyPath = $HOME + "/.ssh/"
 $privateKeyName = $VMName + "-key"
 $publicKeyName = $VMName + "-key.pub"
-$privateKeyPath = $keyPath + "/" + $privateKeyName
-$publicKeyPath  = $keyPath + "/" + $publicKeyName
+$privateKeyPath = $keyPath + $privateKeyName
+$publicKeyPath  = $keyPath + $publicKeyName
 
 $privateKeyPath
 
