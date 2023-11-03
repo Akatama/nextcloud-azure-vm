@@ -20,22 +20,19 @@ jobs:
 - job: Create_virtual_machine_and_configure_NextCloud
   timeoutInMinutes: 10
   steps:
-    - task: AzurePowerShell@5
-      inputs:
-        azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
-        ScriptType: 'InlineScript'
-        Inline: |
-          $keyPath = $HOME + "/.ssh/"
-          $privateKeyName = $(vmName) + "-key"
-          $publicKeyName = $(vmName) + "-key.pub"
-          $privateKeyPath = $keyPath + "/" + $privateKeyName
-          $publicKeyPath  = $keyPath + "/" + $publicKeyName
-          
-          ssh-keygen -m PEM -t rsa -b 2048 -C $(vmName) -f $privateKeyPath -N ''
-          
-          $sshKey = Get-Content $publicKeyPath
-          $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
+  - task: AzurePowerShell@5
+    inputs:
+      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+      ScriptType: 'FilePath'
+      ScriptPath: '$(System.DefaultWorkingDirectory)/genKeyAndCallBicep.ps1'
+      ScriptArguments: '-VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -VNetName ansible-test-vnet'
+      azurePowerShellVersion: 'LatestVersion'
+  - task: AzurePowerShell@5
+    inputs:
+      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+      ScriptType: 'InlineScript'
+      Inline: 'Get-Content "$(System.DefaultWorkingDirectory)/ansible/static.ini"'
+      azurePowerShellVersion: 'LatestVersion'
+  
 
-          New-AzResourceGroupDeployment -ResourceGroupName $(resourceGroupName) -TemplateFile $(System.DefaultWorkingDirectory)/bicep/virtualMachine.bicep -vmName $(vmName) `
-          -location $(location) -vnetName $(vnetName) -adminUsername $(userName) -adminPasswordOrKey $secureSSHKey
     
