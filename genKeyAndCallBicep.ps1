@@ -1,15 +1,15 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Updates the Scale Set Pool to be associated with the Azure Virutal Machine Scale Sets
+    Generates a public and private SSH key
+    Then passes it to the Bicep file in this repo to create a virtual machine scale set that we can access with that key
 
 .DESCRIPTION
-    First we call the function Get-ScaleSetPools to get a designated scale set
-    Then we filter out the Scale Set Pools via the azureId field
-    Then we call Update_ScaleSetPool to update it with the appropriate information
+    Generates a public and private SSH key
+    Then passes it to the Bicep file in this repo to create a virtual machine scale set that we can access with that key
 
 .Example
-    ./Update-ScaleSetPools.ps1 -OrganizationUrl "https://dev.azure.com/jimmyl0495" -PATToken <Your_PAT_Token> -PoolId 16
+    ./genKeyAndCallBicep.ps1 -VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -VNetName ansible-test-vnet
 #>
 param(
     [Parameter(Mandatory=$true)][string]$VMName,
@@ -27,7 +27,9 @@ $publicKeyName = $VMName + "-key.pub"
 $privateKeyPath = $keyPath + "/" + $privateKeyName
 $publicKeyPath  = $keyPath + "/" + $publicKeyName
 
-#ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N ''
+$privateKeyPath
+
+ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N '""'
 
 $sshKey = Get-Content $publicKeyPath
 $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
@@ -35,8 +37,8 @@ $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -TemplateFile ./bicep/virtualMachine.bicep -vmName $VMName `
     -location $Location -vnetName $VNetName -adminUsername $UserName -adminPasswordOrKey $secureSSHKey
 
-$publicIP = Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $publicIPName
+$publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $publicIPName).IpAddress
 
-$staticIniLine = "${publicIP.IpAddress} ansible_ssh_private_key_file=${privateKeyPath}"
+$staticIniLine = "${publicIP} ansible_ssh_private_key_file=${privateKeyPath}"
 
 $staticIniLine > ./ansible/static.ini
