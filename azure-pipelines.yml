@@ -54,5 +54,5 @@ jobs:
     displayName: Run_Ansible_Playbook
     inputs:
       targetType: 'inline'
-      script: 'ansible-playbook -e @nextcloud_passwords.enc -vault-password-file vault_pass configureNextCloud.yml '
+      script: 'ansible-playbook -e @nextcloud_passwords.enc --vault-password-file vault_pass configureNextCloud.yml '
       workingDirectory: '$(System.DefaultWorkingDirectory)/ansible'
