@@ -1,6 +1,3 @@
-trigger:
-- main
-
 variables:
 - name: vmName
   value: nextCloudBicep
@@ -21,6 +18,7 @@ jobs:
   timeoutInMinutes: 10
   steps:
   - task: AzurePowerShell@5
+    displayName: Deploy_VM
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'FilePath'
@@ -28,22 +26,33 @@ jobs:
       ScriptArguments: '-VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -VNetName ansible-test-vnet'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
+    displayName: Verify_Static_Ini
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'InlineScript'
       Inline: 'Get-Content "$(System.DefaultWorkingDirectory)/ansible/static.ini"'
       azurePowerShellVersion: 'LatestVersion' 
   - task: UsePythonVersion@0
+    displayName: Update_Python
     inputs:
       versionSpec: '3.10.12'
       addToPath: true
       architecture: 'x64'
   - task: Bash@3
+    displayName: Install_Ansible
     inputs:
       targetType: 'inline'
       script: 'pip install ansible'
+  - task: AzureCLI@2
+    inputs:
+      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+      scriptType: 'pscore'
+      scriptLocation: 'inlineScript'
+      inlineScript: '${env:VAULT_PASSWORD} > vault_pass'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/ansible'
   - task: Bash@3
+    displayName: Run_Ansible_Playbook
     inputs:
       targetType: 'inline'
-      script: 'ansible-playbook configureNextCloud.yml'
+      script: 'ansible-playbook -e @nextcloud_passwords.enc -vault-password-file vault_pass configureNextCloud.yml '
       workingDirectory: '$(System.DefaultWorkingDirectory)/ansible'
