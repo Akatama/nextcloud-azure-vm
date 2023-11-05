@@ -49,7 +49,7 @@ jobs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       scriptType: 'pscore'
       scriptLocation: 'inlineScript'
-      inlineScript: '$(vault_pass) > vault_pass'
+      inlineScript: '"$(vault_pass)" > vault_pass'
       workingDirectory: '$(System.DefaultWorkingDirectory)/ansible'
   - task: AzurePowerShell@5
     displayName: Verify_Vault_Pass
