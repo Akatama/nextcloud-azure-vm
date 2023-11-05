@@ -6,9 +6,9 @@
     - vars/info.yml
   
   tasks:
-    - name: Write the new host key to known hosts
-      connection: local
-      shell: "sudo ssh-keyscan -H {{ inventory_hostname }} >> ~/.ssh/known_hosts"
+    # - name: Write the new host key to known hosts
+    #   connection: local
+    #   shell: "sudo ssh-keyscan -H {{ inventory_hostname }} >> ~/.ssh/known_hosts"
     - name: Update software packages
       ansible.builtin.apt:
         update_cache: yes

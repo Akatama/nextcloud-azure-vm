@@ -39,6 +39,6 @@ New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -TemplateFil
 
 $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $publicIPName).IpAddress
 
-$staticIniLine = "${publicIP} ansible_ssh_private_key_file=${privateKeyPath}"
+$staticIniLine = "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}"
 
 $staticIniLine > ./ansible/static.ini
