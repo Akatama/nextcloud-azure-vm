@@ -22,7 +22,8 @@ jobs:
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'FilePath'
-      ScriptPath: '$(System.DefaultWorkingDirectory)/part_1_base/genKeyAndCallBicep.ps1'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/part_1_base/'
+      ScriptPath: './genKeyAndCallBicep.ps1'
       ScriptArguments: '-VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -VNetName ansible-test-vnet'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
@@ -30,8 +31,9 @@ jobs:
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'InlineScript'
-      Inline: 'Get-Content "$(System.DefaultWorkingDirectory)/part_1_base/ansible/static.ini"'
+      Inline: 'Get-Content "./ansible/static.ini"'
       azurePowerShellVersion: 'LatestVersion'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/part_1_base/'
   - task: UsePythonVersion@0
     displayName: Update_Python
     inputs:
