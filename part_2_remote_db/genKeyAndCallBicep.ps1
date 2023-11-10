@@ -38,7 +38,7 @@ $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 
 # New-AzResourceGroup -Name $ResourceGroupName -Location $Location
 
-New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -TemplateFile ./bicep/main.bicep -vmName $VMName `
+New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $VMName -TemplateFile ./bicep/main.bicep -vmName $VMName `
     -location $Location -vnetName $VNetName -adminUsername $UserName -adminPasswordOrKey $secureSSHKey -administratorLogin $DBAdminName `
     -administratorLoginPassword $DBAdminPassword
 

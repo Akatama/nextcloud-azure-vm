@@ -4,13 +4,16 @@ param vmName string
 @description('Size of the created virtual machine')
 param vmSize string = 'Standard_B2s'
 
-param location string = 'Central US'
+param location string = 'East US'
 
 @description('name of the Vnet we will attach our VM to')
 param vnetName string
 
 @description('Subnet we will attach our VM to')
-param subnetName string = 'default'
+param vmSubnetName string = 'default'
+
+@description('Subnet we will attach our database to')
+param dbSubnetName string = 'database'
 
 @description('Username for the Virtual Machine.')
 param adminUsername string
@@ -36,7 +39,7 @@ param administratorLoginPassword string
 @description('The tier of the particular SKU. High Availability is available only for GeneralPurpose and MemoryOptimized sku.')
 @allowed([
   'Burstable'
-  'GeneralPurpose'
+  'Generalpurpose'
   'MemoryOptimized'
 ])
 param serverEdition string = 'Burstable'
@@ -94,9 +97,23 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' = {
     }
     subnets: [
       {
-        name: subnetName
+        name: vmSubnetName
         properties: {
           addressPrefix: '10.1.0.0/24'
+        }
+      }
+      {
+        name: dbSubnetName
+        properties: {
+          addressPrefix: '10.1.1.0/24'
+          delegations: [
+            {
+              name: 'MySQLflexibleServers'
+              properties: {
+                serviceName: 'Microsoft.DBforMySQL/flexibleServers'
+              }
+            }
+          ]
         }
       }
     ]
@@ -204,6 +221,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
 resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
   name: vmName
   location: location
+  dependsOn: [nsg, publicIP, virtualNetwork]
   properties: {
     hardwareProfile: {
       vmSize: vmSize
@@ -253,8 +271,8 @@ resource mySQLServer 'Microsoft.DBforMySQL/flexibleServers@2023-06-30' = {
   name: sqlServerName
   location: location
   sku: {
-    tier: skuName
-    name: serverEdition
+    name: skuName
+    tier: serverEdition
   }
   properties: {
     version: serverVersion
@@ -271,7 +289,7 @@ resource mySQLServer 'Microsoft.DBforMySQL/flexibleServers@2023-06-30' = {
       autoGrow: storageAutogrow
     }
     network: {
-      delegatedSubnetResourceId: virtualNetwork.properties.subnets[0].id
+      delegatedSubnetResourceId: virtualNetwork.properties.subnets[1].id
     }
     backup: {
       backupRetentionDays: backupRetentionDays
