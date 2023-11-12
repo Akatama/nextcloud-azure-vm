@@ -3,7 +3,8 @@
   hosts: all
   gather_facts: false
   vars_files:
-    - vars/info.yml
+    - vars/users.yml
+    - vars/db.yml
   
   tasks:
     # - name: Write the new host key to known hosts
@@ -18,7 +19,6 @@
       ansible.builtin.apt:
         name:
         - apache2
-        - mariadb-server
         - libapache2-mod-php
         - php-gd
         - php-mysql
@@ -33,20 +33,6 @@
         - python3-mysqldb
         - unzip
         state: present
-      become: true
-    - name: Create mysql database nextcloud
-      community.mysql.mysql_db:
-        name: nextcloud
-        state: present
-        encoding: utf8mb4
-        collation: utf8mb4_general_ci
-      become: true
-    - name: Create user for mysql database nextcloud
-      community.mysql.mysql_user:
-        state: present
-        name: '{{ db_user }}'
-        password: '{{ db_password }}'
-        priv: 'nextcloud.*:ALL,GRANT'
       become: true
     - name: Download NextCloud server and confirm the checksum
       ansible.builtin.get_url:
@@ -111,7 +97,7 @@
       register: nextcloud_installed
     - name: Run NextCloud setup
       ansible.builtin.shell:
-        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }}'
+        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-host='{{ db_host }}' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }}'
         chdir: /var/www/nextcloud/
       when: not nextcloud_installed.stat.exists
     - name: Add the nextcloud_installed.txt file, if it doesn't exist

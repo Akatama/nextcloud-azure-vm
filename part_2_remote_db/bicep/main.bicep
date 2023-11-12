@@ -52,7 +52,7 @@ param serverEdition string = 'Burstable'
 param serverVersion string = '8.0.21'
 
 @description('Availability Zone information of the server. (Leave blank for No Preference).')
-param availabilityZone string = '1'
+param availabilityZone string = ''
 
 @description('High availability mode for a server : Disabled, SameZone, or ZoneRedundant')
 @allowed([
@@ -252,15 +252,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
         managedDisk: {
           storageAccountType: 'StandardSSD_LRS'
         }
-        
       }
-      dataDisks: [
-        {
-          diskSizeGB: 1023
-          lun: 0
-          createOption: 'Empty'
-        }
-      ]
     }
   }
 }
@@ -304,5 +296,6 @@ resource nextcloud_database 'Microsoft.DBforMySQL/flexibleServers/databases@2023
   properties: {
     charset: 'utf8mb4'
     collation: 'utf8mb4_general_ci'
+
   }
 }

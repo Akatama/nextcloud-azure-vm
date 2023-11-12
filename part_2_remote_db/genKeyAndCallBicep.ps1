@@ -22,6 +22,7 @@ param(
 )
 
 $publicIPName = "${vmName}-PublicIP"
+$mySQlServerName = "${vmName}-mysqlserver".ToLower()
 
 $keyPath = $HOME + "/.ssh/"
 $privateKeyName = $VMName + "-key"
@@ -47,3 +48,12 @@ $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $
 $staticIniLine = "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}"
 
 $staticIniLine > ./ansible/static.ini
+
+# At least according to MS documentation, you can only do this with the Azure CLI.
+# Depending on when you are reading these comments, there might be a PowerShell cmdlet for it.
+$requireSecureTransport = Update-AzMySqlFlexibleServerConfiguration -Name require_secure_transport -ResourceGroupName $ResourceGroupName `
+    -ServerName $mySQlServerName -Value OFF
+
+$dbYamlLine = "db_host: ${mySQlServerName}.mysql.database.azure.com"
+
+$dbYamlLine > ./ansible/vars/db.yml
