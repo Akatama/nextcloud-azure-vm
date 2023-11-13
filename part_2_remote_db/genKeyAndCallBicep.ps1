@@ -17,12 +17,15 @@ param(
     [Parameter(Mandatory=$true)][string]$Location,
     [Parameter(Mandatory=$true)][string]$UserName,
     [Parameter(Mandatory=$true)][string]$VNetName,
-    [Parameter(Mandatory=$true)][string]$DBAdminName,
-    [Parameter(Mandatory=$true)][securestring]$DBAdminPassword
+    [Parameter(Mandatory=$true)][string]$DBAdminName
 )
 
 $publicIPName = "${vmName}-PublicIP"
 $mySQlServerName = "${vmName}-mysqlserver".ToLower()
+
+# Use Ansible-Vault to get the db password
+$passwords = ansible-vault view ./ansible/nextcloud_passwords.enc --vault-password-file ./ansible/vault_pass
+$DBAdminPassword = ConvertTo-SecureString $passwords[0].split(":")[1].trim() -AsPlainText -Force
 
 $keyPath = $HOME + "/.ssh/"
 $privateKeyName = $VMName + "-key"
