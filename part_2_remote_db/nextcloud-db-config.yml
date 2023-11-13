@@ -27,7 +27,7 @@ jobs:
       ScriptType: 'FilePath'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/'
       ScriptPath: '$(System.DefaultWorkingDirectory)/part_2_remote_db/genKeyAndCallBicep.ps1'
-      ScriptArguments: '-VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -VNetName ansible-test-vnet'
+      ScriptArguments: '-VMName nextCloudBicep -ResourceGroupName nextcloud -Location "Central US" -UserName jimmy -VNetName nextcloud-vnet -DBAdminName ncadmin'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
     displayName: Verify_Static_Ini
