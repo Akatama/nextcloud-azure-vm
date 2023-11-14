@@ -20,6 +20,22 @@ jobs:
 - job: Create_virtual_machine_and_configure_NextCloud
   timeoutInMinutes: 10
   steps:
+  - task: AzureCLI@2
+    displayName: Set_Up_Vault_Pass_File
+    inputs:
+      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+      scriptType: 'pscore'
+      scriptLocation: 'inlineScript'
+      inlineScript: '"$(vault_pass)" > vault_pass'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/ansible/'
+  - task: AzurePowerShell@5
+    displayName: Verify_Vault_Pass
+    inputs:
+      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
+      ScriptType: 'InlineScript'
+      Inline: 'Get-Content "ansible/vault_pass"'
+      azurePowerShellVersion: 'LatestVersion'
+      workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/'
   - task: AzurePowerShell@5
     displayName: Deploy_VM
     inputs:
@@ -48,22 +64,6 @@ jobs:
     inputs:
       targetType: 'inline'
       script: 'pip install ansible'
-  - task: AzureCLI@2
-    displayName: Set_Up_Vault_Pass_File
-    inputs:
-      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
-      scriptType: 'pscore'
-      scriptLocation: 'inlineScript'
-      inlineScript: '"$(vault_pass)" > vault_pass'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/ansible/'
-  - task: AzurePowerShell@5
-    displayName: Verify_Vault_Pass
-    inputs:
-      azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
-      ScriptType: 'InlineScript'
-      Inline: 'Get-Content "ansible/vault_pass"'
-      azurePowerShellVersion: 'LatestVersion'
-      workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/'
   - task: Bash@3
     displayName: Run_Ansible_Playbook
     inputs:
