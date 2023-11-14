@@ -18,7 +18,7 @@ pool:
 
 jobs:
 - job: Create_virtual_machine_and_configure_NextCloud
-  timeoutInMinutes: 10
+  timeoutInMinutes: 30
   steps:
   - task: AzureCLI@2
     displayName: Set_Up_Vault_Pass_File
