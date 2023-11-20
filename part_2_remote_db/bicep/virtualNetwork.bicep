@@ -4,7 +4,7 @@ param location string = 'Central US'
 param vnetName string
 
 @description('Subnet we will attach our VM to')
-param vmSubnetName string = 'default'
+param vmSubnetName string = 'server'
 
 @description('Subnet we will attach our database to')
 param dbSubnetName string = 'database'
