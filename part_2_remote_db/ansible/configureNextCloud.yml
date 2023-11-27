@@ -5,6 +5,7 @@
   vars_files:
     - vars/users.yml
     - vars/db.yml
+    - vars/config.yml
   
   tasks:
     # - name: Write the new host key to known hosts
@@ -34,6 +35,41 @@
         - unzip
         state: present
       become: true
+    - name: Download the AZNFS Mount Helper script
+      ansible.builtin.get_url:
+        url: https://github.com/Azure/AZNFS-mount/releases/latest/download/aznfs_install.sh
+        dest: /home/jimmy
+        mode: 777
+      become: true
+    - name: Run the AZNFS Mount Helper script
+      ansible.builtin.command:
+        cmd: sudo ./aznfs_install.sh
+    - name: Create the mountpoint for Azure blob storage
+      ansible.builtin.file:
+        path: /nextcloud
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+      become: true
+    - name: Replace N with Y in enable_azure_nconnect to active Azure nconnect
+      ansible.builtin.lineinfile:
+        line: Y
+        state: present
+        regexp: ^N
+        path: /sys/module/sunrpc/parameters/enable_azure_nconnect
+      become: true
+    - name: Append this line to the /etc/fstab file
+      ansible.builtin.lineinfile:
+        line: nextcloudbicepstorage.blob.core.windows.net:/nextcloudbicepstorage/nextcloudbicep  /nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0
+        state: present
+        path: /etc/fstab
+      become: true
+    - name: Mount the Azure Blob container
+      ansible.posix.mount:
+        src: /nextcloud
+        state: ephemeral
+        fstype: nfs
     - name: Download NextCloud server and confirm the checksum
       ansible.builtin.get_url:
         url: https://download.nextcloud.com/server/releases/nextcloud-27.1.3.zip
@@ -97,13 +133,40 @@
       register: nextcloud_installed
     - name: Run NextCloud setup
       ansible.builtin.shell:
-        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-host='{{ db_host }}' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }}'
+        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-host='{{ db_host }}' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }} --data-dir='nextcloud''
         chdir: /var/www/nextcloud/
       when: not nextcloud_installed.stat.exists
     - name: Add the nextcloud_installed.txt file, if it doesn't exist
       ansible.builtin.file:
         path: /var/www/nextcloud/nextcloud_installed.txt
         state: touch
+        mode: 0644
+      become: true
+    - name: Get the password salt from the original config.php
+      ansible.builtin.shell:
+        cmd: sed -n -e "s/^.*passwordsalt. => '//p" config.php | sed "s/..$//"
+        chdir: /var/www/nextcloud/config
+      register: password_salt
+      become: true
+      when: password_salt is undefined
+    - name: Get the secret from the original config.php
+      ansible.builtin.shell:
+        cmd: sed -n -e "s/^.*secret. => '//p" config.php | sed "s/..$//"
+        chdir: /var/www/nextcloud/config
+      register: secret
+      become: true
+      when: secret is undefined
+    - name: Get the instance id from the original config.php
+      ansible.builtin.shell:
+        cmd: sed -n -e "s/^.*instanceid. => '//p" config.php | sed "s/..$//"
+        chdir: /var/www/nextcloud/config
+      register: instance_id
+      become: true
+    - ansible.builtin.template:
+        src: ../files/config.yml.j2
+        dest: /var/www/nextcloud/config/config.yml
+        owner: www-data
+        group: www-data
         mode: 0644
       become: true
     - name: Remove old config.php file

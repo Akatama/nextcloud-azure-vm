@@ -22,9 +22,12 @@ $mySQlServerName = "${ResourceBaseName}-mysqlserver".ToLower()
 $passwords = ansible-vault view ./ansible/nextcloud_passwords.enc --vault-password-file ./ansible/vault_pass
 $DBAdminPassword = ConvertTo-SecureString $passwords[0].split(":")[1].trim() -AsPlainText -Force
 
+New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $ResourceBaseName -TemplateFile ./bicep/mySql.bicep -resourceBaseName $ResourceBaseName `
+    -location $Location -vnetName $VNetName -administratorLogin $DBAdminName -administratorLoginPassword $DBAdminPassword -vnetResourceGroup $VnetResourceGroup
+
+$requireSecureTransport = Update-AzMySqlFlexibleServerConfiguration -Name require_secure_transport -ResourceGroupName $ResourceGroupName `
+    -ServerName $mySQlServerName -Value OFF
+
 $dbYamlLine = "db_host: ${mySQlServerName}.mysql.database.azure.com"
 
 $dbYamlLine > ./ansible/vars/db.yml
-
-New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $ResourceBaseName -TemplateFile ./bicep/mySql.bicep -resourceBaseName $ResourceBaseName `
-    -location $Location -vnetName $VNetName -administratorLogin $DBAdminName -administratorLoginPassword $DBAdminPassword -vnetResourceGroup $VnetResourceGroup

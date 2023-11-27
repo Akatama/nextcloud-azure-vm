@@ -1,3 +1,5 @@
 **/ansible/vault_pass
+
 **/files/userpass
+
 **/ansible/vars/db.yml

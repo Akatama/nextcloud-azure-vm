@@ -1,13 +1,13 @@
 <?php
 $CONFIG = array (
-  'passwordsalt' => 'kqHMIzkCG5ON2zm9jURpxEILnEHgBj',
-  'secret' => 'oQCcMmuq+bOEhz1Wp+GPFzQnc47XbcKXr6UnY7+zUhehHshE',
+  'passwordsalt' => '{{ password_salt.stdout }}',
+  'secret' => '{{ secret.stdout }}',
   'trusted_domains' =>
   array (
           0 => 'localhost',
           1 => '*'
   ),
-  'datadirectory' => '/var/www/nextcloud/data',
+  'datadirectory' => '/nextcloud',
   'dbtype' => 'mysql',
   'version' => '27.1.3.2',
   'overwrite.cli.url' => 'https://localhost/nextcloud',
@@ -20,6 +20,6 @@ $CONFIG = array (
   'dbuser' => '{{ db_user }}',
   'dbpassword' => '{{ db_password }}',
   'installed' => true,
-  'instanceid' => 'ock1x4ifu0bo',
+  'instanceid' => '{{ instance_id.stdout }}',
   'maintenance_window_start' => '1'
 );
