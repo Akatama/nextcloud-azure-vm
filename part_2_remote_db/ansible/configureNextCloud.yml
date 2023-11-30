@@ -46,30 +46,37 @@
         cmd: sudo ./aznfs_install.sh
     - name: Create the mountpoint for Azure blob storage
       ansible.builtin.file:
-        path: /nextcloud
+        path: /home/nextcloud
         state: directory
         mode: '0755'
         owner: www-data
         group: www-data
       become: true
-    - name: Replace N with Y in enable_azure_nconnect to active Azure nconnect
-      ansible.builtin.lineinfile:
-        line: Y
-        state: present
-        regexp: ^N
+    - name: Change the ownership of enable_azure_nconnect to jimmy
+      ansible.builtin.file:
         path: /sys/module/sunrpc/parameters/enable_azure_nconnect
+        owner: jimmy
+        group: jimmy
       become: true
+    - name: Replace N with Y in enable_azure_nconnect to active Azure nconnect
+      ansible.builtin.command:
+        cmd: echo Y > /sys/module/sunrpc/parameters/enable_azure_nconnect
     - name: Append this line to the /etc/fstab file
       ansible.builtin.lineinfile:
-        line: nextcloudbicepstorage.blob.core.windows.net:/nextcloudbicepstorage/nextcloudbicep  /nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0
+        line: nextcloudbicepstorage.blob.core.windows.net:/nextcloudbicepstorage/nextcloudbicep  /home/nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0
         state: present
         path: /etc/fstab
       become: true
     - name: Mount the Azure Blob container
-      ansible.posix.mount:
-        src: /nextcloud
-        state: ephemeral
-        fstype: nfs
+      ansible.builtin.command: mount /home/nextcloud
+    - name: Verify the directory that is for the mountpoint has the correct permissions because it keeps changing
+      ansible.builtin.file:
+        path: /home/nextcloud
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+      become: true
     - name: Download NextCloud server and confirm the checksum
       ansible.builtin.get_url:
         url: https://download.nextcloud.com/server/releases/nextcloud-27.1.3.zip
@@ -133,7 +140,7 @@
       register: nextcloud_installed
     - name: Run NextCloud setup
       ansible.builtin.shell:
-        cmd: sudo -u www-data php occ maintenance:install --database='mysql' --database-host='{{ db_host }}' --database-name='nextcloud' --database-user='{{ db_user }}' --database-pass='{{ db_password }}' --admin-user='{{ user }}' --admin-pass='{{ user_password }} --data-dir='nextcloud''
+        cmd: sudo -u www-data php occ maintenance:install --database="mysql" --database-host="{{ db_host }}" --database-name="nextcloud" --database-user="{{ db_user }}" --database-pass="{{ db_password }}" --admin-user="{{ user }}" --admin-pass="{{ user_password }}" --data-dir="/home/nextcloud"
         chdir: /var/www/nextcloud/
       when: not nextcloud_installed.stat.exists
     - name: Add the nextcloud_installed.txt file, if it doesn't exist
@@ -142,19 +149,35 @@
         state: touch
         mode: 0644
       become: true
+    - name: Verify that .ocdata file exists
+      ansible.builtin.file:
+        path: /home/nextcloud/.ocdata
+        owner: www-data
+        group: www-data
+        mode: '0644'
+        state: touch
+      become: true
     - name: Get the password salt from the original config.php
       ansible.builtin.shell:
         cmd: sed -n -e "s/^.*passwordsalt. => '//p" config.php | sed "s/..$//"
         chdir: /var/www/nextcloud/config
-      register: password_salt
+      register: password_salt_unsimplified
       become: true
+      when: password_salt is undefined
+    - name: Simplify the password_salt_unsimplified variable
+      ansible.builtin.set_fact: 
+        password_salt={{ password_salt_unsimplified.stdout }}
       when: password_salt is undefined
     - name: Get the secret from the original config.php
       ansible.builtin.shell:
         cmd: sed -n -e "s/^.*secret. => '//p" config.php | sed "s/..$//"
         chdir: /var/www/nextcloud/config
-      register: secret
+      register: secret_unsimplified
       become: true
+      when: secret is undefined
+    - name: Simplify the secret_unsimplified variable
+      ansible.builtin.set_fact: 
+        secret={{ secret_unsimplified.stdout }}
       when: secret is undefined
     - name: Get the instance id from the original config.php
       ansible.builtin.shell:
@@ -191,4 +214,7 @@
         minute: "*/5"
         job: php -f /var/www/nextcloud/cron.php
         user: www-data
+      become: true
+    - name: Reboot at the end
+      ansible.builtin.reboot:
       become: true
