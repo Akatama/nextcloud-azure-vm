@@ -33,6 +33,7 @@
         - php-zip
         - python3-mysqldb
         - unzip
+        - php-apcu
         state: present
       become: true
     - name: Download the AZNFS Mount Helper script
@@ -94,6 +95,13 @@
         owner: www-data
         group: www-data
         recurse: yes
+      become: true
+    - name: Modify the memory_limit in apache2/php.ini
+      ansible.builtin.lineinfile:
+        path: /etc/php/8.1/apache2/php.ini
+        line: memory_limit = 1G
+        regexp: memory_limit
+        state: present
       become: true
     - name: Ensure Nextcloud is configured
       ansible.builtin.copy:
@@ -163,22 +171,22 @@
         chdir: /var/www/nextcloud/config
       register: password_salt_unsimplified
       become: true
-      when: password_salt is undefined
+      when: not password_salt
     - name: Simplify the password_salt_unsimplified variable
       ansible.builtin.set_fact: 
         password_salt={{ password_salt_unsimplified.stdout }}
-      when: password_salt is undefined
+      when: not password_salt 
     - name: Get the secret from the original config.php
       ansible.builtin.shell:
         cmd: sed -n -e "s/^.*secret. => '//p" config.php | sed "s/..$//"
         chdir: /var/www/nextcloud/config
       register: secret_unsimplified
       become: true
-      when: secret is undefined
+      when: not secret 
     - name: Simplify the secret_unsimplified variable
       ansible.builtin.set_fact: 
         secret={{ secret_unsimplified.stdout }}
-      when: secret is undefined
+      when: not secret 
     - name: Get the instance id from the original config.php
       ansible.builtin.shell:
         cmd: sed -n -e "s/^.*instanceid. => '//p" config.php | sed "s/..$//"
@@ -205,14 +213,19 @@
         group: www-data
         mode: 0644
       become: true
+    - name: Restart apache2
+      ansible.builtin.systemd:
+        name: apache2
+        state: restarted
+      become: true
     - name: Update htaccess for NextCloud
       ansible.builtin.shell:
-        cmd: sudo -u www-data php /var/www/nextcloud/occ maintenance:update:htaccess
+        cmd: sudo -u www-data php --define apc.enable_cli=1 /var/www/nextcloud/occ maintenance:update:htaccess
     - name: Set up cron job to maintain NextCloud server
       ansible.builtin.cron:
         name: NextCloud maintenance
         minute: "*/5"
-        job: php -f /var/www/nextcloud/cron.php
+        job: php -f /var/www/nextcloud/cron.php --define apc.enable_cli=1
         user: www-data
       become: true
     - name: Reboot at the end
