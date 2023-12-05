@@ -1,6 +1,6 @@
-Alias /nextcloud "/var/www/nextcloud/"
+Alias /nextcloud "/var/www/html/"
 
-<Directory /var/www/nextcloud/>
+<Directory /var/www/html/>
   Require all granted
   AllowOverride All
   Options FollowSymLinks MultiViews
@@ -10,11 +10,11 @@ Alias /nextcloud "/var/www/nextcloud/"
   </IfModule>
 </Directory>
 <VirtualHost *:80>
-   ServerName /nextcloud
-   Redirect permanent / https://localhost/nextcloud
+   ServerName {{ ansible_host }}
+   Redirect permanent / https://{{ ansible_host }}/
 </VirtualHost>
 <VirtualHost *:443>
-  ServerName /nextcloud
+  ServerName {{ ansible_host }}
     <IfModule mod_headers.c>
       Header always set Strict-Transport-Security "max-age=15552000; includeSubDomains"
     </IfModule>
