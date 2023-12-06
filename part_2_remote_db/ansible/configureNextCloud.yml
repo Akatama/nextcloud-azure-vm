@@ -242,7 +242,12 @@
         line:   RewriteRule ^/\.well-known/caldav https://{{ ansible_host }}/remote.php/dav/ [R=301,L]
         regexp: caldav
       become: true
-    - name: Update htaccess for NextCloudadd libmagickcore-6.q16-6-extra
+    - name: Update htaccess for NextCloud
+      ansible.builtin.shell:
+        cmd: sudo -u www-data php --define apc.enable_cli=1 /var/www/html/occ maintenance:update:htaccess
+    - name: Set up cron job to maintain NextCloud server
+      ansible.builtin.cron:
+        name: NextCloud maintenance
         minute: "*/5"
         job: php -f /var/www/html/cron.php --define apc.enable_cli=1
         user: www-data
