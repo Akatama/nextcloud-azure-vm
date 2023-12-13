@@ -17,7 +17,19 @@ Included here:
 * A few files that the Ansible Playbook needs, such as the nextcloud.conf and config.php.j2
 
 ### part_2_remote_db
-The purpose of this part is to do the same thing as part_1_base, but have a remote database. This part will be mostly getting us set up for future parts
+This part has done what I did in part_1_base, but I have seperated the server from the file storage and database. The database is Azure Database for MySQL flexible server. The file storage is utilizing Azure Blob storage with NSF v3 and Hierarchical namespaces enabled. Azure Blob storage with NSF v3 allows you to mount the blob storage onto a Linux machine, which then you can access as if it was a folder on the server.
+
+Included here:
+* A Bicep file to deploy the virtual network configuration, which includes a subnet set up for the Azure Database for MySQL flexible server (including adding the server Microsoft.DBforMySQL/flexibleServers) as well as a subnet for the server and Azure blob storage
+* A Bicep file for deploying the Azure Database for MySQL flexible server
+* A Bicep file for deploying the Azure Blob storage
+* A Bicep file to deploy the VM, which includes an NSG and public IP. Currently this bicep file connects to the virtual network deployed in the first Bicep file.
+* A PowerShell script which gets the Database Admin password from nextcloud_passwords.enc using Ansible-Vault, deploys the Azure Database for MySQL flexible server, then turns off require_secure_transport from the Database for MySQL flexible server configuration.
+* A PowerShell script which generates a new SSH Key, then takes all the parameters and calls the Bicep file.
+* An Ansible Playbook
+* An Ansible Vault encypted password file, which contains the password for both the database admin and the first user of Nextcloud
+* An Ansible Configuration file, along with a static.ini for inventory
+* A few files that the Ansible Playbook needs, such as the nextcloud.conf.j2 and config.php.j2
 
 ### part_3_high_availability
 Coming soon
