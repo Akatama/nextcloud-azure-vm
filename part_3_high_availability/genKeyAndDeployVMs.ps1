@@ -17,7 +17,8 @@ param(
     [Parameter(Mandatory=$true)][string]$Location,
     [Parameter(Mandatory=$true)][string]$UserName,
     [Parameter(Mandatory=$true)][string]$VNetName,
-    [Parameter(Mandatory=$true)][string]$VNetResourceGroup
+    [Parameter(Mandatory=$true)][string]$VNetResourceGroup,
+    [Parameter(Mandatory=$true)][int]$numberOfVMs
 )
 
 $publicIPName = "${vmName}-PublicIP"
@@ -38,10 +39,15 @@ $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 # New-AzResourceGroup -Name $ResourceGroupName -Location $Location
 
 New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $VMName -TemplateFile ./bicep/virtualMachine.bicep -vmName $VMName `
-    -location $Location -vnetName $VNetName -vnetResourceGroup $VNetResourceGroup -adminUsername $UserName -adminPasswordOrKey $secureSSHKey
+    -location $Location -vnetName $VNetName -vnetResourceGroup $VNetResourceGroup -adminUsername $UserName -adminPasswordOrKey $secureSSHKey `
+    -itemCount $numberOfVMs
 
-$publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name $publicIPName).IpAddress
+$staticIniLines = ""
+for($i=0; $i -lt $numberOfVms; $i++)
+{
+    $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name "${publicIPName}${i}").IpAddress
 
-$staticIniLine = "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}"
+    $staticIniLines += "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}\n"
+}
 
-$staticIniLine > ./ansible/static.ini
+$staticIniLines > ./ansible/static.ini

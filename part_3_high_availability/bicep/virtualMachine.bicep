@@ -26,6 +26,8 @@ param vnetName string
 @description('name of the Vnet resource group')
 param vnetResourceGroup string
 
+param itemCount int = 3
+
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -41,6 +43,18 @@ var linuxConfiguration = {
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: vnetName
   scope: resourceGroup(vnetResourceGroup)
+}
+
+resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-07-01' = {
+  name: '${vmName}-availbilityset'
+  location: location
+  sku: {
+    name: 'Aligned'
+  }
+  properties: {
+    platformFaultDomainCount: itemCount
+    platformUpdateDomainCount: itemCount
+  }
 }
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
@@ -91,8 +105,8 @@ resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
   }
 }
 
-resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
-  name: '${vmName}-PublicIP'
+resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = [for i in range(0, itemCount): {
+  name: '${vmName}-PublicIP${i}'
   location: location
   sku: {
     name: 'Basic'
@@ -103,10 +117,10 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
     idleTimeoutInMinutes: 4
   }
 
-}
+}]
 
-resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
-  name : '${vmName}-NIC'
+resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = [for i in range(0, itemCount): {
+  name : '${vmName}-NIC${i}'
   location: location
   properties: {
     ipConfigurations: [
@@ -118,7 +132,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
             id: virtualNetwork.properties.subnets[0].id
           }
           publicIPAddress: {
-            id: publicIP.id
+            id: publicIP[i].id
           }
         }
       }
@@ -127,13 +141,16 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = {
       id: nsg.id
     }
   }
-}
+}]
 
-resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
-  name: vmName
+resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = [for i in range(0, itemCount): {
+  name: '${vmName}${i}'
   location: location
   dependsOn: [nsg, publicIP, virtualNetwork]
   properties: {
+    availabilitySet: {
+      id: availabilitySet.id
+    }
     hardwareProfile: {
       vmSize: vmSize
     }
@@ -146,7 +163,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
     networkProfile: {
       networkInterfaces: [
         {
-          id: nic.id
+          id: nic[i].id
         }
       ]
     }
@@ -166,4 +183,4 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = {
       }
     }
   }
-}
+}]
