@@ -46,8 +46,7 @@ $staticIniLines = ""
 for($i=0; $i -lt $numberOfVms; $i++)
 {
     $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name "${publicIPName}${i}").IpAddress
-
-    $staticIniLines += "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}\n"
+    $staticIniLines += "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}`n"
 }
 
 $staticIniLines > ./ansible/static.ini
