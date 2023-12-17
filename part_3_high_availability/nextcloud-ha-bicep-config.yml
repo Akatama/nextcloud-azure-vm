@@ -57,7 +57,7 @@ jobs:
       ScriptType: 'FilePath'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/'
       ScriptPath: '$(System.DefaultWorkingDirectory)/part_3_high_availability/genKeyAndDeployServers.ps1'
-      ScriptArguments: '-VMName $(vmName) -ResourceGroupName $(resourceGroupName) -Location $(location) -UserName $(userName) -VNetName $(vnetName) -VNetResourceGroup $(vnetResourceGroupName) -NumberOfVMs $(numberOfVMs)'
+      ScriptArguments: '-VMName $(vmName) -ResourceGroupName $(resourceGroupName) -Location "$(location)" -UserName $(userName) -VNetName $(vnetName) -VNetResourceGroup $(vnetResourceGroupName) -NumberOfVMs $(numberOfVMs)'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
     displayName: Verify_Static_Ini
