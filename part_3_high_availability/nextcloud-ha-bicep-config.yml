@@ -56,7 +56,7 @@ jobs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'FilePath'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/'
-      ScriptPath: '$(System.DefaultWorkingDirectory)/part_3_high_availability/genKeyAndDeployServers.ps1'
+      ScriptPath: 'genKeyAndDeployServers.ps1'
       ScriptArguments: '-VMName $(vmName) -ResourceGroupName $(resourceGroupName) -Location "$(location)" -UserName $(userName) -VNetName $(vnetName) -VNetResourceGroup $(vnetResourceGroupName) -NumberOfVMs $(numberOfVMs)'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
@@ -64,7 +64,7 @@ jobs:
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'InlineScript'
-      Inline: 'Get-Content "$(System.DefaultWorkingDirectory)/part_3_high_availability/ansible/static.ini"'
+      Inline: 'Get-Content "ansible/static.ini"'
       azurePowerShellVersion: 'LatestVersion'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/'
   - task: UsePythonVersion@0
@@ -85,11 +85,11 @@ jobs:
       script: 'ansible-playbook -e @nextcloud_passwords.enc --vault-password-file vault_pass configureNextCloud.yml '
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/ansible/'
   - task: AzurePowerShell@5
-    displayName: Secure_VMs_By_Removed_SSH_Access_and_Public_IPs
+    displayName: Secure_VMs_By_Removing_SSH_Access_and_Public_IPs
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'FilePath'
-      ScriptPath: '$(System.DefaultWorkingDirectory)/part_3_high_availability/secureVMs.ps1'
+      ScriptPath: 'secureVMs.ps1'
       ScriptArguments: '-ResourceBaseName $(vmName) -ResourceGroupName $(resourceGroupName) -NumberOfInstances $(numberOfVMs)'
       azurePowerShellVersion: 'LatestVersion'
       pwsh: true
