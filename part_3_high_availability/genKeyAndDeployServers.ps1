@@ -9,7 +9,8 @@
     Then passes it to the Bicep file in this repo to create a virtual machine scale set that we can access with that key
 
 .Example
-    ./genKeyAndCallBicep.ps1 -VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -DBdminName ncadmin
+    ./genKeyAndDeployServers.ps1 -VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy
+         -VNetName vnet -VNetResourceGroup vnetRG -NumberofVMs 3
 #>
 param(
     [Parameter(Mandatory=$true)][string]$VMName,
@@ -18,10 +19,11 @@ param(
     [Parameter(Mandatory=$true)][string]$UserName,
     [Parameter(Mandatory=$true)][string]$VNetName,
     [Parameter(Mandatory=$true)][string]$VNetResourceGroup,
-    [Parameter(Mandatory=$true)][int]$numberOfVMs
+    [Parameter(Mandatory=$true)][int]$NumberOfVMs
 )
 
-$publicIPName = "${vmName}-PublicIP"
+$publicIPBaseName = "${vmName}-PublicIP"
+$publicIPLoadBalancerName = "${vmName}-LB-PublicIP"
 
 $keyPath = $HOME + "/.ssh/"
 $privateKeyName = $VMName + "-key"
@@ -38,15 +40,18 @@ $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 
 # New-AzResourceGroup -Name $ResourceGroupName -Location $Location
 
-New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $VMName -TemplateFile ./bicep/virtualMachine.bicep -vmName $VMName `
+New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $VMName -TemplateFile ./bicep/main.bicep -vmName $VMName `
     -location $Location -vnetName $VNetName -vnetResourceGroup $VNetResourceGroup -adminUsername $UserName -adminPasswordOrKey $secureSSHKey `
-    -itemCount $numberOfVMs
+    -itemCount $NumberOfVMs
 
 $staticIniLines = ""
-for($i=0; $i -lt $numberOfVms; $i++)
+for($i=0; $i -lt $NumberOfVms; $i++)
 {
-    $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name "${publicIPName}${i}").IpAddress
+    $publicIP = (Get-AzPublicIpAddress -ResourceGroupName $ResourceGroupName -Name "${publicIPBaseName}${i}").IpAddress
     $staticIniLines += "${publicIP} ansible_ssh_private_key_file=${privateKeyPath} ansible_user=${UserName}`n"
 }
 
 $staticIniLines > ./ansible/static.ini
+
+$lbFQDN = (Get-AzPublicIpAddress -Name $publicIPLoadBalancerName -ResourceGroupName $ResourceGroupName).DnsSettings.Fqdn
+"fqdn: $lbFQDN" > ./ansible/vars/fqdn.yml

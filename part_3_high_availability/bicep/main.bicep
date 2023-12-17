@@ -40,6 +40,8 @@ var linuxConfiguration = {
   }
 }
 
+var loadBalancerName = '${vmName}-LB'
+
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
   name: vnetName
   scope: resourceGroup(vnetResourceGroup)
@@ -58,7 +60,7 @@ resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-07-01' = {
 }
 
 resource nsg 'Microsoft.Network/networkSecurityGroups@2023-05-01' = {
-  name: '${vmName}-nsg'
+  name: '${vmName}-NSG'
   location: location
   properties: {
     securityRules: [
@@ -109,15 +111,49 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = [for i in r
   name: '${vmName}-PublicIP${i}'
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Standard'
   }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
+    publicIPAllocationMethod: 'Static'
     publicIPAddressVersion: 'IPv4'
     idleTimeoutInMinutes: 4
   }
 
 }]
+
+resource ddosProtection 'Microsoft.Network/ddosProtectionPlans@2023-05-01' = {
+  name : '${vmName}-Prot'
+  location: location
+}
+
+resource publicIPLB 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
+  name: '${loadBalancerName}-PublicIP'
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+    publicIPAddressVersion: 'IPv4'
+    idleTimeoutInMinutes: 4
+    dnsSettings: {
+      domainNameLabel: toLower(vmName)
+      // domainNameLabelScope (look more into this)
+    }
+    ddosSettings: {
+      protectionMode: 'Enabled'
+      ddosProtectionPlan: {
+        id: ddosProtection.id
+      }
+    }
+  }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
+
+}
 
 resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = [for i in range(0, itemCount): {
   name : '${vmName}-NIC${i}'
@@ -134,6 +170,11 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = [for i in range(
           publicIPAddress: {
             id: publicIP[i].id
           }
+          loadBalancerBackendAddressPools: [
+            {
+              id: loadBalancer.properties.backendAddressPools[0].id
+            }
+          ]
         }
       }
     ]
@@ -142,6 +183,85 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-05-01' = [for i in range(
     }
   }
 }]
+
+resource loadBalancer 'Microsoft.Network/loadBalancers@2023-05-01' = {
+  name: loadBalancerName
+  location: location
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    frontendIPConfigurations: [
+      {
+        properties: {
+          publicIPAddress: {
+            id: publicIPLB.id
+          }
+        }
+        name: 'LoadBalancerFrontend'
+      }
+    ]
+    backendAddressPools: [
+      {
+        name: 'BackendPool1'
+      }
+    ]
+    loadBalancingRules: [
+      {
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, 'LoadBalancerFrontend')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, 'lbprobe')
+          }
+          protocol: 'Tcp'
+          frontendPort: 443
+          backendPort: 443
+          idleTimeoutInMinutes: 15
+          loadDistribution: 'SourceIPProtocol'
+        }
+        name: 'lbHTTPS'
+      }
+      {
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', loadBalancerName, 'LoadBalancerFrontend')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', loadBalancerName, 'BackendPool1')
+          }
+          probe: {
+            id: resourceId('Microsoft.Network/loadBalancers/probes', loadBalancerName, 'lbprobe')
+          }
+          protocol: 'Tcp'
+          frontendPort: 80
+          backendPort: 80
+          idleTimeoutInMinutes: 15
+          loadDistribution: 'SourceIPProtocol'
+        }
+        name: 'lbHTTP'
+      }
+    ]
+    probes: [
+      {
+        properties: {
+          protocol: 'Tcp'
+          port: 80
+          intervalInSeconds: 15
+          numberOfProbes: 2
+        }
+        name: 'lbprobe'
+      }
+    ]
+  }
+  dependsOn: [
+    virtualNetwork
+  ]
+}
 
 resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = [for i in range(0, itemCount): {
   name: '${vmName}${i}'

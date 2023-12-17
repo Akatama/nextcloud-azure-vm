@@ -10,11 +10,11 @@ Alias /nextcloud "/var/www/html/"
   </IfModule>
 </Directory>
 <VirtualHost *:80>
-   ServerName {{ ansible_host }}
-   Redirect permanent / https://{{ ansible_host }}/
+   ServerName {{ fqdn }}
+   Redirect permanent / https://{{ fqdn }}/
 </VirtualHost>
 <VirtualHost *:443>
-  ServerName {{ ansible_host }}
+  ServerName {{ fqdn }}
     <IfModule mod_headers.c>
       Header always set Strict-Transport-Security "max-age=15552000; includeSubDomains"
     </IfModule>

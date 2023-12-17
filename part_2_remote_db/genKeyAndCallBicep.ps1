@@ -9,7 +9,8 @@
     Then passes it to the Bicep file in this repo to create a virtual machine scale set that we can access with that key
 
 .Example
-    ./genKeyAndCallBicep.ps1 -VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy -DBdminName ncadmin
+    ./genKeyAndCallBicep.ps1 -VMName nextCloudBicep -ResourceGroupName app-jlindsey2 -Location "Central US" -UserName jimmy
+         -VNetName vnet -VNetResourceGroup vnetRG
 #>
 param(
     [Parameter(Mandatory=$true)][string]$VMName,

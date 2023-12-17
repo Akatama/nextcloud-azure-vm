@@ -7,6 +7,7 @@
     - vars/users.yml
     - vars/db.yml
     - vars/config.yml
+    - vars/fqdn.yml
   
   tasks:
     # - name: Write the new host key to known hosts
@@ -221,13 +222,13 @@
     - name: Change the Rewite rule line for carddav
       ansible.builtin.lineinfile:
         path: /var/www/html/.htaccess
-        line:   RewriteRule ^/\.well-known/carddav https://{{ ansible_host }}/remote.php/dav/ [R=301,L]
+        line:   RewriteRule ^/\.well-known/carddav https://{{ fqdn }}/remote.php/dav/ [R=301,L]
         regexp: carddav
       become: true
     - name: Change the Rewite rule line for caldav
       ansible.builtin.lineinfile:
         path: /var/www/html/.htaccess
-        line:   RewriteRule ^/\.well-known/caldav https://{{ ansible_host }}/remote.php/dav/ [R=301,L]
+        line:   RewriteRule ^/\.well-known/caldav https://{{ fqdn }}/remote.php/dav/ [R=301,L]
         regexp: caldav
       become: true
     - name: Update htaccess for NextCloud
