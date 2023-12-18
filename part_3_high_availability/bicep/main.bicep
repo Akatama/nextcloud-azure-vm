@@ -42,6 +42,13 @@ var linuxConfiguration = {
   }
 }
 
+var ddosProtectionConfiguration = {
+  protectionMode: 'Enabled'
+  ddosProtectionPlan: {
+    id: ddosProtection.id
+  }
+}
+
 var loadBalancerName = '${vmName}-LB'
 
 resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' existing = {
@@ -142,12 +149,7 @@ resource publicIPLB 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
       domainNameLabel: toLower(vmName)
       // domainNameLabelScope (look more into this)
     }
-    ddosSettings: {
-      protectionMode: 'Enabled'
-      ddosProtectionPlan: {
-        id: (enableDDoSProtection ? ddosProtection.id : null)
-      }
-    }
+    ddosSettings: (enableDDoSProtection ? ddosProtectionConfiguration : null)
   }
   zones: [
     '1'
