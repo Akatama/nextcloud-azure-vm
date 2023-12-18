@@ -28,6 +28,8 @@ param vnetResourceGroup string
 
 param itemCount int = 3
 
+param enableDDoSProtection bool = false
+
 var linuxConfiguration = {
   disablePasswordAuthentication: true
   ssh: {
@@ -121,7 +123,7 @@ resource publicIP 'Microsoft.Network/publicIPAddresses@2023-05-01' = [for i in r
 
 }]
 
-resource ddosProtection 'Microsoft.Network/ddosProtectionPlans@2023-05-01' = {
+resource ddosProtection 'Microsoft.Network/ddosProtectionPlans@2023-05-01' = if(enableDDoSProtection) {
   name : '${vmName}-Prot'
   location: location
 }
@@ -143,7 +145,7 @@ resource publicIPLB 'Microsoft.Network/publicIPAddresses@2023-05-01' = {
     ddosSettings: {
       protectionMode: 'Enabled'
       ddosProtectionPlan: {
-        id: ddosProtection.id
+        id: (enableDDoSProtection ? ddosProtection.id : null)
       }
     }
   }
