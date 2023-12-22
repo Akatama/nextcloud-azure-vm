@@ -2,7 +2,6 @@
 - name: Configure NextCloud
   hosts: all
   gather_facts: false
-  serial: 1
   vars_files:
     - vars/users.yml
     - vars/db.yml
