@@ -7,6 +7,7 @@
     - vars/db.yml
     - vars/config.yml
     - vars/fqdn.yml
+    - vars/storageAccount.yml
   
   tasks:
     # - name: Write the new host key to known hosts
@@ -67,7 +68,7 @@
         cmd: echo Y > /sys/module/sunrpc/parameters/enable_azure_nconnect
     - name: Append this line to the /etc/fstab file
       ansible.builtin.lineinfile:
-        line: nextcloudbicepstorage.blob.core.windows.net:/nextcloudbicepstorage/nextcloud  /mnt/nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0
+        line: "{{ storage_account }}.net:/{{ storage_account }}/nextcloud  /mnt/nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0"
         state: present
         path: /etc/fstab
       become: true
