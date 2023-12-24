@@ -39,7 +39,7 @@ jobs:
     inputs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'InlineScript'
-      Inline: '"storage_account: ${storageAccount}" > ./vars/storageAccount.yml'
+      Inline: '"storage_account: $(storageAccount)" > ./vars/storageAccount.yml'
       azurePowerShellVersion: 'LatestVersion'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/ansible/'
   - task: AzurePowerShell@5
