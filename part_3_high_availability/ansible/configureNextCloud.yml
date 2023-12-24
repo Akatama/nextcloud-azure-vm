@@ -68,7 +68,7 @@
         cmd: echo Y > /sys/module/sunrpc/parameters/enable_azure_nconnect
     - name: Append this line to the /etc/fstab file
       ansible.builtin.lineinfile:
-        line: "{{ storage_account }}.net:/{{ storage_account }}/nextcloud  /mnt/nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0"
+        line: "{{ storage_account }}.blob.core.windows.net:/{{ storage_account }}/nextcloud  /mnt/nextcloud    aznfs defaults,nconnect=16,sec=sys,vers=3,nolock,proto=tcp,nofail,_netdev    0 0"
         state: present
         path: /etc/fstab
       become: true
