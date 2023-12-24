@@ -296,7 +296,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-07-01' = [for i in range(0, 
         publisher: 'canonical'
         offer: '0001-com-ubuntu-server-jammy'
         sku: '22_04-lts-gen2'
-        version: '22.04.202312060'
+        version: 'latest'
       }
       osDisk: {
         createOption: 'FromImage'
