@@ -2,13 +2,17 @@ variables:
 - name: vmName
   value: nextCloudBicep
 - name: resourceGroupName
-  value: app-jlindsey2
+  value: nextcloud-bicep-server
 - name: location
   value: Central US
 - name: userName
   value: jimmy
 - name: vnetName
-  value: ansible-test-vnet
+  value: nextcloud-bicep-vnet
+- name: vnetResourceGroup
+  value: nextcloud-bicep-network
+- name: dbResourceGroup
+  value: nextcloud-bicep-db
 
 trigger:
   none
@@ -34,7 +38,7 @@ jobs:
       azureSubscription: 'cccis-jlindsey-sandbox(ff95cccd-cbb7-41a2-b4ba-41917218c03c)'
       ScriptType: 'InlineScript'
       Inline: |
-        $dbFQDN = (Get-AzMySqlFlexibleServer -ResourceGroupName nextcloud-bicep-db).FullyQualifiedDomainName
+        $dbFQDN = (Get-AzMySqlFlexibleServer -ResourceGroupName $(dbResourceGroup)).FullyQualifiedDomainName
         "db_host: ${dbFQDN}" > ./vars/db.yml
       azurePowerShellVersion: 'LatestVersion'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/ansible/'
@@ -53,7 +57,7 @@ jobs:
       ScriptType: 'FilePath'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_2_remote_db/'
       ScriptPath: '$(System.DefaultWorkingDirectory)/part_2_remote_db/genKeyAndCallBicep.ps1'
-      ScriptArguments: '-VMName nextcloud-bicep -ResourceGroupName nextcloud-bicep-server -Location "Central US" -UserName jimmy -VNetName nextcloud-bicep-vnet -VNetResourceGroup nextcloud-bicep-network'
+      ScriptArguments: '-VMName $(vmName) -ResourceGroupName $(resourceGroupName) -Location $(location) -UserName $(userName) -VNetName $(vnetName) -VNetResourceGroup $(vnetResourceGroup)'
       azurePowerShellVersion: 'LatestVersion'
   - task: AzurePowerShell@5
     displayName: Verify_Static_Ini
