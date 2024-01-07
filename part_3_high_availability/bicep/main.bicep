@@ -57,7 +57,7 @@ resource virtualNetwork 'Microsoft.Network/virtualNetworks@2023-05-01' existing 
 }
 
 resource availabilitySet 'Microsoft.Compute/availabilitySets@2023-07-01' = {
-  name: '${vmName}-availbilityset'
+  name: '${vmName}-availabilityset'
   location: location
   sku: {
     name: 'Aligned'
