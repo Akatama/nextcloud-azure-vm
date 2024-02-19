@@ -33,7 +33,7 @@ $publicKeyPath  = $keyPath + $publicKeyName
 
 $privateKeyPath
 
-ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N '""'
+ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N "testestestDFJFJFJ"
 
 $sshKey = Get-Content $publicKeyPath
 $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
