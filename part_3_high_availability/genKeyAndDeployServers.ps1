@@ -33,12 +33,12 @@ $publicKeyPath  = $keyPath + $publicKeyName
 
 $privateKeyPath
 
-ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N "testestestDFJFJFJ"
+ssh-keygen -m PEM -t rsa -b 2048 -C $vmName -f $privateKeyPath -N '""'
 
 $sshKey = Get-Content $publicKeyPath
 $secureSSHKey = ConvertTo-SecureString $sshKey -AsPlainText -Force
 
-# New-AzResourceGroup -Name $ResourceGroupName -Location $Location
+New-AzResourceGroup -Name $ResourceGroupName -Location $Location
 
 New-AzResourceGroupDeployment -ResourceGroupName $ResourceGroupName -Name $VMName -TemplateFile ./bicep/main.bicep -vmName $VMName `
     -location $Location -vnetName $VNetName -vnetResourceGroup $VNetResourceGroup -adminUsername $UserName -adminPasswordOrKey $secureSSHKey `

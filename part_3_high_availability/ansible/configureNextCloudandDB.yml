@@ -58,6 +58,14 @@
         owner: www-data
         group: www-data
       become: true
+    - name: Make sure mount point has right access level and ownership
+      ansible.builtin.file:
+        path: /mnt/nextcloud
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+      become: true
     - name: Change the ownership of enable_azure_nconnect to jimmy
       ansible.builtin.file:
         path: /sys/module/sunrpc/parameters/enable_azure_nconnect
