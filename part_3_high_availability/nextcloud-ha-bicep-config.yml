@@ -66,6 +66,14 @@ jobs:
       Inline: 'Get-Content "ansible/vars/storageAccount.yml"'
       azurePowerShellVersion: 'LatestVersion'
       workingDirectory: '$(System.DefaultWorkingDirectory)/part_3_high_availability/'
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+        keyPath="$HOME/.ssh/"
+        privateKeyName="$(vmName)-key"
+        privateKeyPath="$keyPath$privateKeyName"
+        ssh-keygen -m PEM -t rsa -b 2048 -C $(vmName) -f $privateKeyPath -N ""
   - task: AzurePowerShell@5
     displayName: Deploy_Servers
     inputs:
